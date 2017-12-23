@@ -17,6 +17,8 @@ namespace mog {
         unsigned int getFrameCount();
         unsigned int getMargin();
         Size getFrameSize();
+        void setFrameCount(unsigned int frameCount);
+        void setMargin(unsigned int margin);
 
         void startAnimation(float timePerFrame, LoopType loopType = LoopType::None, int loopCount = 0, int startFrame = 0, int endFrame = 0);
         void startAnimation(const vector<float> &timePerFrames, LoopType loopType = LoopType::None, int loopCount = 0, int startFrame = 0, int endFrame = 0);
@@ -49,6 +51,7 @@ namespace mog {
         
         void updateSpriteFrame(float delta);
         void init(const shared_ptr<Sprite> sprite, const Size &frameSize, unsigned int frameCount, unsigned int margin);
+        void initFrames(unsigned int frameCount, unsigned int margin);
         virtual void copyFrom(const shared_ptr<Entity> &src) override;
     };
 }

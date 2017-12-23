@@ -16,19 +16,27 @@ void SpriteSheet::init(const shared_ptr<Sprite> sprite, const Size &frameSize, u
     this->texture = sprite->getTexture();
     this->filename = sprite->getFilename();
     this->transform->size = frameSize;
+    this->size = frameSize;
     this->rect = sprite->getRect();
     this->frameSize = frameSize;
-    this->margin = margin;
-    if (frameCount == 0) {
-        frameCount = (unsigned int)(floor(this->rect.size.width / frameSize.width) * floor(this->rect.size.height / frameSize.height));
-    }
-    this->frameCount = frameCount;
-
-    this->framePoints.reserve(frameCount);
     
+    this->initFrames(frameCount, margin);
+}
+
+void SpriteSheet::initFrames(unsigned int frameCount, unsigned int margin) {
     float _margin = (float)margin / this->texture->density.value;
     int cols = (this->rect.size.width + _margin) / (frameSize.width + _margin);
     int rows = (this->rect.size.height + _margin) / (frameSize.height + _margin);
+    
+    if (frameCount == 0) {
+        frameCount = (unsigned int)(cols, rows);
+    }
+
+    this->frameCount = frameCount;
+    this->margin = margin;
+
+    this->framePoints.clear();
+    this->framePoints.reserve(frameCount);
     
     int r = 0;
     int c = 0;
@@ -44,8 +52,19 @@ void SpriteSheet::init(const shared_ptr<Sprite> sprite, const Size &frameSize, u
             c = 0;
         }
     }
+    if (frameCount == 0) {
+        this->framePoints.emplace_back(Point(0, 0));
+    }
     
     this->frameCount = (unsigned int)framePoints.size();
+}
+
+void SpriteSheet::setFrameCount(unsigned int frameCount) {
+    this->initFrames(frameCount, this->margin);
+}
+
+void SpriteSheet::setMargin(unsigned int margin) {
+    this->initFrames(this->frameCount, margin);
 }
 
 void SpriteSheet::updateFrame(const shared_ptr<Engine> &engine, float delta) {

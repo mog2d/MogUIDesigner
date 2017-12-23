@@ -26,6 +26,7 @@ MainWindow::MainWindow(QApplication &a, QWidget *parent) :
     ui->setupUi(this);
 
     this->doubleValidator = new QDoubleValidator(this);
+    this->intValidator = new QIntValidator(this);
     this->initProperties();
 
     this->connect(&a, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
@@ -435,11 +436,101 @@ void MainWindow::initPropertiesSlice9Sprite()
     this->createLineEdit("height", Property::CenterRectHeight, this->doubleValidator, setSlice9SpriteProperty);
 
     this->endPropertiesGroup("CenterRect");
+
+    this->endPropertiesGroup("Slice9Sprite");
 }
 
 void MainWindow::initPropertiesSpriteSheet()
 {
+    auto setSpriteSheetProperty = [this]() {
+        auto name = this->getSelectedName();
+        Platform platform = (Platform)(this->ui->comboBox_Platform->currentIndex() + 1);
+
+        auto filename = ((QComboBox *)this->getWidget(Property::Filename))->currentText();
+        auto rectX = ((QLineEdit *)this->getWidget(Property::RectX))->text();
+        auto rectY = ((QLineEdit *)this->getWidget(Property::RectY))->text();
+        auto rectW = ((QLineEdit *)this->getWidget(Property::RectWidth))->text();
+        auto rectH = ((QLineEdit *)this->getWidget(Property::RectHeight))->text();
+        auto frameSizeWidth = ((QLineEdit *)this->getWidget(Property::FrameSizeWidth))->text();
+        auto frameSizeHeight = ((QLineEdit *)this->getWidget(Property::FrameSizeHeight))->text();
+        auto frameCount = ((QLineEdit *)this->getWidget(Property::FrameCount))->text();
+        auto margin = ((QLineEdit *)this->getWidget(Property::Margin))->text();
+
+        std::string filepath = this->getAssetFilePath(platform, filename.toStdString());
+        mog::Rect rect = mog::Rect(rectX.toFloat(), rectY.toFloat(), rectW.toFloat(), rectH.toFloat());
+        mog::Size frameSize = mog::Size(frameSizeWidth.toFloat(), frameSizeHeight.toFloat());
+
+        this->getApp()->replaceSpriteSheet(name, filepath, rect, frameSize, frameCount.toInt(), margin.toInt());
+        this->setPropertyValuesFromEntity();
+    };
+
     this->startPropertiesGroup("SpriteSheet");
+
+    this->startPropertiesGroup("Sprite");
+
+    QStringList items;
+    items.append("");
+    for (auto asset : this->assetsSet) {
+        items.append(asset.c_str());
+    }
+    this->createComboBox("filename", Property::Filename, items, [setSpriteSheetProperty](const QString &text) {
+        setSpriteSheetProperty();
+    });
+
+    this->startPropertiesGroup("Rect");
+
+    this->createLineEdit("x", Property::RectX, this->doubleValidator, setSpriteSheetProperty);
+    this->createLineEdit("y", Property::RectY, this->doubleValidator, setSpriteSheetProperty);
+    this->createLineEdit("width", Property::RectWidth, this->doubleValidator, setSpriteSheetProperty);
+    this->createLineEdit("height", Property::RectHeight, this->doubleValidator, setSpriteSheetProperty);
+
+    this->endPropertiesGroup("Rect");
+
+    this->endPropertiesGroup("Sprite");
+
+    this->startPropertiesGroup("frameSize");
+
+    this->createLineEdit("width", Property::FrameSizeWidth, this->doubleValidator, setSpriteSheetProperty);
+    this->createLineEdit("height", Property::FrameSizeHeight, this->doubleValidator, setSpriteSheetProperty);
+
+    this->endPropertiesGroup("frameSize");
+
+    this->createLineEdit("frameCount", Property::FrameCount, this->intValidator, setSpriteSheetProperty);
+    this->createLineEdit("margin", Property::Margin, this->intValidator, setSpriteSheetProperty);
+
+    this->startPropertiesGroup("test");
+
+    QPushButton *playButton = new QPushButton(this);
+    playButton->setText("Start Animation");
+    this->connect(playButton, &QPushButton::clicked, [this]() {
+        auto button = (QPushButton *)this->getWidget(Property::Play);
+
+        if (button->text() == "Stop Animation") {
+            this->getApp()->stopAnimationSpriteSheet(this->getSelectedName());
+
+        } else {
+            button->setText("Stop Animation");
+
+            this->getApp()->setSpriteSheetAnimationFinish(this->getSelectedName(), [this]() {
+                auto button = (QPushButton *)this->getWidget(Property::Play);
+                button->setText("Start Animation");
+            });
+            this->getApp()->startAnimationSpriteSheet(this->getSelectedName());
+        }
+    });
+    int playRow = this->addPropertyItem("", playButton);
+    this->propertyRows[Property::Play] = playRow;
+
+    QPushButton *resetButton = new QPushButton(this);
+    resetButton->setText("Reset");
+    this->connect(resetButton, &QPushButton::clicked, [this]() {
+        this->getApp()->resetAnimationSpriteSheet(this->getSelectedName());
+    });
+    int resetRow = this->addPropertyItem("", resetButton);
+    this->propertyRows[Property::Reset] = resetRow;
+
+
+    this->endPropertiesGroup("test");
 
     this->endPropertiesGroup("SpriteSheet");
 }
@@ -731,6 +822,8 @@ void MainWindow::setPropertyValuesFromEntity() {
     auto anchor = this->getApp()->getAnchor(name);
     auto origin = this->getApp()->getOrigin(name);
     auto color = this->getApp()->getColor(name);
+    bool isRatioWidth = this->getApp()->isRatioWidth(name);
+    bool isRatioHeight = this->getApp()->isRatioHeight(name);
 
     auto nameW = (QLineEdit *)this->getWidget(Property::Name);
     nameW->setText(QString::fromStdString(name));
@@ -743,6 +836,12 @@ void MainWindow::setPropertyValuesFromEntity() {
 
     auto sizeWW = (QLineEdit *)this->getWidget(Property::Width);
     sizeWW->setText(this->formatFloat(size.width));
+
+    auto sizeWRW = (QCheckBox *)this->getWidget(Property::IsRatioWidth);
+    sizeWRW->setChecked(isRatioWidth);
+
+    auto sizeHRW = (QCheckBox *)this->getWidget(Property::IsRatioHeight);
+    sizeHRW->setChecked(isRatioHeight);
 
     auto sizeHW = (QLineEdit *)this->getWidget(Property::Height);
     sizeHW->setText(this->formatFloat(size.height));
@@ -818,7 +917,8 @@ void MainWindow::setPropertyValuesFromEntity() {
             break;
         }
         case mog::EntityType::Sprite:
-        case mog::EntityType::Slice9Sprite: {
+        case mog::EntityType::Slice9Sprite:
+        case mog::EntityType::SpriteSheet: {
             auto filepath = this->getApp()->getSpriteFilename(name);
             auto rect = this->getApp()->getSpriteRect(name);
 
@@ -854,6 +954,23 @@ void MainWindow::setPropertyValuesFromEntity() {
 
                 auto centerRectHW = (QLineEdit *)this->getWidget(Property::CenterRectHeight);
                 centerRectHW->setText(this->formatFloat(centerRect.size.height));
+            }
+            if (entityType == mog::EntityType::SpriteSheet) {
+                auto frameSize = this->getApp()->getSpriteSheetFrameSize(name);
+                auto frameCount = this->getApp()->getSpriteSheetFrameCount(name);
+                auto margin = this->getApp()->getSpriteSheetMargin(name);
+
+                auto frameSizeWidthW = (QLineEdit *)this->getWidget(Property::FrameSizeWidth);
+                frameSizeWidthW->setText(this->formatFloat(frameSize.width));
+
+                auto frameSizeHeightW = (QLineEdit *)this->getWidget(Property::FrameSizeHeight);
+                frameSizeHeightW->setText(this->formatFloat(frameSize.height));
+
+                auto frameCountW = (QLineEdit *)this->getWidget(Property::FrameCount);
+                frameCountW->setText(QString::number(frameCount));
+
+                auto marginW = (QLineEdit *)this->getWidget(Property::Margin);
+                marginW->setText(QString::number(margin));
             }
 
             break;

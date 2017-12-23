@@ -74,6 +74,13 @@ private:
         CenterRectY,
         CenterRectWidth,
         CenterRectHeight,
+        // SpriteSheet
+        FrameSizeWidth,
+        FrameSizeHeight,
+        FrameCount,
+        Margin,
+        Play,
+        Reset,
     };
 
     static const std::unordered_map<std::string, mog::EntityType> entityTypeMap;
@@ -87,6 +94,7 @@ private:
     std::set<std::string> assetsSet;
     std::map<std::string, std::string> assetsPathMap;
     bool isOpenProjectDialog = false;
+    QIntValidator *intValidator;
     QDoubleValidator *doubleValidator;
 
     void initProperties();

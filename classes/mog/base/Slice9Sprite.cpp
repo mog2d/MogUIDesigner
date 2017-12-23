@@ -14,8 +14,8 @@ void Slice9Sprite::init(const shared_ptr<Sprite> sprite, const Rect &centerRect)
     this->filename = sprite->getFilename();
     this->texture = sprite->getTexture();
     this->transform->size = sprite->getSize();
+    this->size = this->transform->size;
     this->rect = sprite->getRect();
-    this->size = this->rect.size;
     this->centerRect = centerRect;
 }
 
@@ -56,24 +56,20 @@ void Slice9Sprite::bindVertices(float *vertices, int *idx, bool bakeTransform) {
     auto v2 = Point(m[4], m[5]);
     auto offset = Point(m[12], m[13]);
     
-    Point baseScale = Point((this->transform->size.width / this->rect.size.width) * this->transform->scale.x,
-                            (this->transform->size.height / this->rect.size.height) * this->transform->scale.y);
-    Size baseSize = this->rect.size * baseScale;
-    
     float right = this->rect.size.width - (this->centerRect.position.x + this->centerRect.size.width);
     float bottom = this->rect.size.height - (this->centerRect.position.y + this->centerRect.size.height);
 
     float xx[4];
     xx[0] = 0;
     xx[1] = this->centerRect.position.x;
-    xx[2] = baseSize.width - right;
-    xx[3] = baseSize.width;
+    xx[2] = this->transform->size.width - right;
+    xx[3] = this->transform->size.width;
     
     float yy[4];
     yy[0] = 0;
     yy[1] = this->centerRect.position.y;
-    yy[2] = baseSize.height - bottom;
-    yy[3] = baseSize.height;
+    yy[2] = this->transform->size.height - bottom;
+    yy[3] = this->transform->size.height;
     
     for (int xi = 0; xi < 4; xi++) {
         for (int yi = 0; yi < 4; yi++) {

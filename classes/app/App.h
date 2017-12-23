@@ -36,10 +36,17 @@ namespace mog {
         void replaceSpriteSheet(std::string name, std::string filepath, const Rect &rect, Size &frameSize, int frameCount, int margin);
         void replaceEntity(const std::shared_ptr<mog::Entity> &oldEntity, const std::shared_ptr<mog::Entity> &newEntity, bool resetSize = false);
 
+        void startAnimationSpriteSheet(std::string name);
+        void stopAnimationSpriteSheet(std::string name);
+        void setSpriteSheetAnimationFinish(std::string name, function<void()> onFinishAnimation);
+        void resetAnimationSpriteSheet(std::string name);
+
         mog::Density getDensity(std::string filepath);
 
         mog::Point getPosition(std::string name);
         mog::Size getSize(std::string name);
+        bool isRatioWidth(std::string name);
+        bool isRatioHeight(std::string name);
         mog::Point getScale(std::string name);
         mog::Point getAnchor(std::string name);
         mog::Point getOrigin(std::string name);
@@ -51,6 +58,9 @@ namespace mog {
         std::string getLabelFontFilename(std::string name);
         float getLabelHeight(std::string name);
         mog::Rect getSlice9SpriteCenterRect(std::string name);
+        mog::Size getSpriteSheetFrameSize(std::string name);
+        unsigned int getSpriteSheetFrameCount(std::string name);
+        unsigned int getSpriteSheetMargin(std::string name);
 
     private:
         shared_ptr<mog::Scene> mainScene;

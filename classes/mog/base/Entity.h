@@ -133,13 +133,16 @@ namespace mog {
         float getRotation();
         void setWidth(float width, bool isRatio = false);
         float getWidth();
+        float getWidthValue();
         void setHeight(float height, bool isRatio = false);
         float getHeight();
+        float getHeightValue();
         bool isRatioWidth();
         bool isRatioHeight();
         void setSize(const Size &size, bool isRatio = false);
         void setSize(float width, float height, bool isRatio = false);
         Size getSize();
+        Size getSizeValue();
         void setColor(const Color &color);
         void setColor(float r, float g, float b, float a = 1.0f);
         void setColorR(float r);

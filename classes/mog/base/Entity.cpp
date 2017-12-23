@@ -361,6 +361,10 @@ void Entity::setWidth(float width, bool isRatio) {
 }
 
 float Entity::getWidth() {
+    return this->getSize().width;
+}
+
+float Entity::getWidthValue() {
     return this->size.width;
 }
 
@@ -372,6 +376,10 @@ void Entity::setHeight(float height, bool isRatio) {
 }
 
 float Entity::getHeight() {
+    return this->getSize().height;
+}
+
+float Entity::getHeightValue() {
     return this->size.height;
 }
 
@@ -393,6 +401,11 @@ void Entity::setSize(float width, float height, bool isRatio) {
 }
 
 Size Entity::getSize() {
+    this->updatePositionAndSize();
+    return this->transform->size;
+}
+
+Size Entity::getSizeValue() {
     return this->size;
 }
 
@@ -661,19 +674,37 @@ void Entity::updatePositionAndSize() {
         this->transform->position = this->getPositionFrom(Point::zero);
         this->reRenderFlag |= RERENDER_VERTEX;
     }
+    
     if ((this->dirtyFlag & DIRTY_SIZE) == DIRTY_SIZE) {
-        this->transform->size = this->size;
-        if (auto group = this->group.lock()) {
-            if (this->ratioWidth) {
-                this->transform->size.width = group->getWidth() * this->size.width;
-                this->reRenderFlag |= RERENDER_VERTEX;
+        float w = 0;
+        float h = 0;
+        
+        if (this->ratioWidth) {
+            if (auto group = this->group.lock()) {
+                w = group->getWidth() * this->size.width;
             }
-            if (this->ratioHeight) {
-                this->transform->size.height = group->getHeight() * this->size.height;
-                this->reRenderFlag |= RERENDER_VERTEX;
+        } else {
+            w = this->size.width;
+        }
+        
+        if (this->ratioHeight) {
+            if (auto group = this->group.lock()) {
+                h = group->getHeight() * this->size.height;
             }
+        } else {
+            h = this->size.height;
+        }
+        
+        if (!approximately(w, this->transform->size.width)) {
+            this->transform->size.width = w;
+            this->reRenderFlag |= RERENDER_VERTEX;
+        }
+        if (!approximately(h, this->transform->size.height)) {
+            this->transform->size.height = h;
+            this->reRenderFlag |= RERENDER_VERTEX;
         }
     }
+
     this->dirtyFlag = 0;
 }
 

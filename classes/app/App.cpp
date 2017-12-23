@@ -46,10 +46,22 @@ void App::createEntity(EntityType entityType, std::string name, std::string pare
         entity->setSize(100, 100);
         break;
 
-    case EntityType::Slice9Sprite:
+    case EntityType::Slice9Sprite: {
         auto sprite = Sprite::create("");
+        sprite->setSize(100, 100);
         entity = Slice9Sprite::create(sprite, Rect(0, 0, 0, 0));
-        entity->setSize(100, 100);
+        break;
+    }
+
+    case EntityType::SpriteSheet: {
+        auto sprite = Sprite::create("");
+        sprite->setSize(100, 100);
+        entity = SpriteSheet::create(sprite, Size(100, 100));
+        break;
+    }
+
+    case EntityType::Group:
+        entity = Group::create();
         break;
     }
     if (entity) {
@@ -167,9 +179,25 @@ mog::Point App::getPosition(std::string name) {
 mog::Size App::getSize(std::string name) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
     if (entity) {
-        return entity->getSize();
+        return entity->getSizeValue();
     }
     return Size::zero;
+}
+
+bool App::isRatioWidth(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    if (entity) {
+        return entity->isRatioWidth();
+    }
+    return false;
+}
+
+bool App::isRatioHeight(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    if (entity) {
+        return entity->isRatioHeight();
+    }
+    return false;
 }
 
 mog::Point App::getScale(std::string name) {
@@ -261,6 +289,34 @@ mog::Rect App::getSlice9SpriteCenterRect(std::string name) {
     if (slice9Sprite) {
         return slice9Sprite->getCenterRect();
     }
+    return mog::Rect::zero;
+}
+
+mog::Size App::getSpriteSheetFrameSize(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        return spriteSheet->getFrameSize();
+    }
+    return mog::Size::zero;
+}
+
+unsigned int App::getSpriteSheetFrameCount(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        return spriteSheet->getFrameCount();
+    }
+    return 0;
+}
+
+unsigned int App::getSpriteSheetMargin(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        return spriteSheet->getMargin();
+    }
+    return 0;
 }
 
 void App::replaceRoundedRectangle(std::string name, float cornerRadius) {
@@ -308,9 +364,20 @@ void App::replaceSlice9Sprite(std::string name, std::string filepath, const Rect
 
 void App::replaceSpriteSheet(std::string name, std::string filepath, const Rect &rect, Size &frameSize, int frameCount, int margin) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
-    auto newSprite = Sprite::createWithFilePath(filepath, rect, this->getDensity(filepath));
-    auto newSpriteSheet = SpriteSheet::create(newSprite, frameSize, frameCount, margin);
-    this->replaceEntity(entity, newSpriteSheet);
+    bool resetSize = false;
+    Rect _rect = rect;
+    Size _frameSize = frameSize;
+    if (filepath != (static_pointer_cast<Sprite>(entity))->getFilename()) {
+        resetSize = true;
+        _rect = Rect::zero;
+        _frameSize = Size::zero;
+    }
+    auto newSprite = Sprite::createWithFilePath(filepath, _rect, this->getDensity(filepath));
+    if (resetSize) {
+        _frameSize = newSprite->getSizeValue();
+    }
+    auto newSpriteSheet = SpriteSheet::create(newSprite, _frameSize, frameCount, margin);
+    this->replaceEntity(entity, newSpriteSheet, resetSize);
 }
 
 void App::replaceEntity(const std::shared_ptr<mog::Entity> &oldEntity, const std::shared_ptr<mog::Entity> &newEntity, bool resetSize) {
@@ -354,5 +421,39 @@ mog::Density App::getDensity(std::string filepath) {
         return Density::x1_5;
     }
     return Density::x1_0;
+}
 
+void App::startAnimationSpriteSheet(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        spriteSheet->startAnimation(1.0f);
+    }
+}
+
+void App::stopAnimationSpriteSheet(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        spriteSheet->stopAnimation();
+    }
+}
+
+void App::setSpriteSheetAnimationFinish(std::string name, function<void()> onFinishAnimation) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        spriteSheet->setOnFinishEvent([onFinishAnimation](const shared_ptr<SpriteSheet> &spriteSheet) {
+            onFinishAnimation();
+        });
+    }
+}
+
+void App::resetAnimationSpriteSheet(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto spriteSheet = static_pointer_cast<SpriteSheet>(entity);
+    if (spriteSheet) {
+        spriteSheet->stopAnimation();
+        spriteSheet->selectFrame(0);
+    }
 }
