@@ -77,6 +77,35 @@ void App::removeEntity(std::string name)
     }
 }
 
+void App::moveEntity(std::string name, std::string from, std::string to) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto fromEntity = this->mainScene->getRootGroup()->findChildByName(from);
+    auto toEntity = this->mainScene->getRootGroup()->findChildByName(to);
+    auto fromGroup = static_pointer_cast<mog::Group>(fromEntity);
+    auto toGroup = static_pointer_cast<mog::Group>(toEntity);
+
+    if (entity && fromGroup && toGroup) {
+        fromGroup->remove(entity);
+        toGroup->add(entity);
+    }
+}
+
+void App::sortEntities(std::string parentName, std::vector<std::string> childrenNames) {
+    auto parentEntity = this->mainScene->getRootGroup()->findChildByName(parentName);
+    auto parentGroup = static_pointer_cast<mog::Group>(parentEntity);
+
+    std::vector<shared_ptr<mog::Entity>> childrenEntities;
+    for (std::string childName : childrenNames) {
+        auto entity = this->mainScene->getRootGroup()->findChildByName(childName);
+        childrenEntities.emplace_back(entity);
+        entity->removeFromParent();
+    }
+
+    for (auto e : childrenEntities) {
+        parentGroup->add(e);
+    }
+}
+
 void App::setName(std::string name, std::string newName) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
     if (entity) {

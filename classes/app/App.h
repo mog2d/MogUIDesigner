@@ -14,6 +14,8 @@ namespace mog {
         void saveUI(std::string filepath);
         void createEntity(EntityType entityType, std::string name, std::string parentName);
         void removeEntity(std::string name);
+        void sortEntities(std::string parentName, std::vector<std::string> childrenNames);
+        void moveEntity(std::string name, std::string from, std::string to);
         void setName(std::string name, std::string newName);
         void setTag(std::string name, std::string tag);
         void setPositionX(std::string name, float x);

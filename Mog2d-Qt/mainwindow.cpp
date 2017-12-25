@@ -40,6 +40,15 @@ MainWindow::MainWindow(QApplication &a, QWidget *parent) :
 
     this->ui->actionSave->setIcon(QApplication::style()->standardIcon(QStyle::SP_DialogSaveButton));
     this->connect(this->ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
+
+    this->ui->treeWidget_Entities->setTreeItemMoved([this](std::string name, std::string fromParent, std::string toParent) {
+        if (fromParent != toParent) {
+            this->getApp()->moveEntity(name, fromParent, toParent);
+        }
+    });
+    this->ui->treeWidget_Entities->setTreeItemSorted([this](std::string parent, std::vector<std::string> children) {
+        this->getApp()->sortEntities(parent, children);
+    });
 }
 
 MainWindow::~MainWindow()
