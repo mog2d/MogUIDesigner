@@ -53,6 +53,8 @@ namespace mog {
         mog::Point getAnchor(std::string name);
         mog::Point getOrigin(std::string name);
         mog::Color getColor(std::string name);
+        float getCircleRadius(std::string name);
+        float getRoundedRectangleCornerRadius(std::string name);
         std::string getSpriteFilename(std::string name);
         mog::Rect getSpriteRect(std::string name);
         std::string getLabelText(std::string name);

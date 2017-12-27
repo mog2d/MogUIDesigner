@@ -131,7 +131,7 @@
       </widget>
      </item>
      <item>
-      <widget class="MogTreeWidget" name="treeWidget_Entities">
+      <widget class="MogEntityTreeWidget" name="treeWidget_Entities">
        <property name="acceptDrops">
         <bool>true</bool>
        </property>
@@ -282,9 +282,9 @@
    <header>mogglwidget.h</header>
   </customwidget>
   <customwidget>
-   <class>MogTreeWidget</class>
+   <class>MogEntityTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>mogtreewidget.h</header>
+   <header>mogentitytreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

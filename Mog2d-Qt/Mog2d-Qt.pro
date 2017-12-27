@@ -82,7 +82,8 @@ SOURCES += \
         ../classes/app/App.cpp \
         ../classes/app/MainScene.cpp \
         ../classes_qt/mog/os/mogenginecontroller.cpp \
-    mogtreewidget.cpp
+    mogentitytreewidget.cpp \
+    mogassettreewidget.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -142,7 +143,8 @@ HEADERS += \
         ../classes_qt/mog/core/Device.h \
         platform.h \
         origin.h \
-    mogtreewidget.h
+    mogentitytreewidget.h \
+    mogassettreewidget.h
 
 FORMS += \
         mainwindow.ui

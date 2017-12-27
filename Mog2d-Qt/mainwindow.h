@@ -116,7 +116,6 @@ private:
     QWidget *getWidget(Property prop);
     mog::Dictionary createDictionary(mog::EntityType entityType);
     void setPropertiesCommon(mog::Dictionary &dict);
-//    void setPropertiesDefaultValues(mog::EntityType entityType, mog::Dictionary &dict);
     void setPropertiesSprite(mog::Dictionary &dict);
 
     void startPropertiesGroup(QString name);

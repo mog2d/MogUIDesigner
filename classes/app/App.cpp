@@ -261,6 +261,24 @@ mog::Color App::getColor(std::string name) {
     return Color::white;
 }
 
+float App::getCircleRadius(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto circle = static_pointer_cast<Circle>(entity);
+    if (circle) {
+        return circle->getRadius();
+    }
+    return 0;
+}
+
+float App::getRoundedRectangleCornerRadius(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto rectangle = static_pointer_cast<RoundedRectangle>(entity);
+    if (rectangle) {
+        return rectangle->getCornerRadius();
+    }
+    return 0;
+}
+
 std::string App::getSpriteFilename(std::string name) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
     auto sprite = static_pointer_cast<Sprite>(entity);
@@ -356,8 +374,10 @@ void App::replaceRoundedRectangle(std::string name, float cornerRadius) {
 
 void App::replaceCircle(std::string name, float radius) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
-    auto newCircle = Circle::create(radius);
-    this->replaceEntity(entity, newCircle);
+    auto circle = static_pointer_cast<Circle>(entity);
+    if (circle) {
+        circle->setRadius(radius);
+    }
 }
 
 void App::replaceLabel(std::string name, std::string text, float fontSize, std::string fontFilename, float height) {

@@ -49,6 +49,9 @@ MainWindow::MainWindow(QApplication &a, QWidget *parent) :
     this->ui->treeWidget_Entities->setTreeItemSorted([this](std::string parent, std::vector<std::string> children) {
         this->getApp()->sortEntities(parent, children);
     });
+    this->ui->treeWidget_Entities->setTreeItemRemoved([this](std::string name) {
+        this->getApp()->removeEntity(name);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -905,6 +908,20 @@ void MainWindow::setPropertyValuesFromEntity() {
 
     auto entityType = this->toEntityType(entityTypeName);
     switch (entityType) {
+        case mog::EntityType::RoundedRectangle: {
+            float cornerRadius = this->getApp()->getRoundedRectangleCornerRadius(name);
+            auto cornerRadiusW = (QLineEdit *)this->getWidget(Property::CornerRadius);
+            cornerRadiusW->setText(QString::number(cornerRadius));
+            break;
+        }
+
+        case mog::EntityType::Circle: {
+            float radius = this->getApp()->getRoundedRectangleCornerRadius(name);
+            auto radiusW = (QLineEdit *)this->getWidget(Property::Radius);
+            radiusW->setText(QString::number(radius));
+            break;
+        }
+
         case mog::EntityType::Label: {
             auto text = this->getApp()->getLabelText(name);
             float fontSize = this->getApp()->getLabelFontSize(name);

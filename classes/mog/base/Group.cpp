@@ -180,6 +180,7 @@ void Group::remove(const shared_ptr<Entity> &entity) {
     this->sortOrderDirty = true;
     this->setReRenderFlag(RERENDER_ALL);
     this->entityIdSet.erase((uintptr_t)entity.get());
+    entity->setGroup(nullptr);
 }
 
 void Group::removeAll() {
