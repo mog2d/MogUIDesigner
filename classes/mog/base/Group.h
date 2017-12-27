@@ -10,14 +10,18 @@
 #include "mog/base/Entity.h"
 
 namespace mog {
+    class Sprite;
+    
     class Group : public Entity {
     public:
-        static shared_ptr<Group> create();
+        static shared_ptr<Group> create(bool enableBatching = false);
         
         void add(const shared_ptr<Entity> &entity);
         void remove(const shared_ptr<Entity> &entity);
         void removeAll();
         vector<shared_ptr<Entity>> getChildEntities();
+        void setEnableBatching(bool enableBatching);
+        bool isEnableBatching();
         
         shared_ptr<Entity> findChildByName(string name, bool recursive = true);
         vector<shared_ptr<Entity>> findChildrenByTag(string tag, bool recursive = true);
@@ -43,17 +47,31 @@ namespace mog {
 
     protected:
         bool sortOrderDirty = false;
-        
+        bool enableBatching = false;
+        unordered_map<unsigned long, shared_ptr<TextureAtlasCell>> cellMap;
+        shared_ptr<TextureAtlas> textureAtlas;
+
         vector<shared_ptr<Entity>> childEntities;
         vector<shared_ptr<Entity>> childEntitiesToDraw;
-        vector<shared_ptr<Entity>> getSortedChildEntitiesToDraw();
         set<uintptr_t> entityIdSet;
-        
+
         Group();
         
         void sortChildEntitiesToDraw();
-        
+        vector<shared_ptr<Entity>> getSortedChildEntitiesToDraw();
+        shared_ptr<Sprite> createTextureSprite();
+
+        virtual void bindVertex() override;
         virtual void copyFrom(const shared_ptr<Entity> &src) override;
+        
+    private:
+        Color getParentColor();
+        float tmpMatrix[16] = {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        };
     };
 }
 

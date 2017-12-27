@@ -11,7 +11,9 @@ namespace mog {
     public:
         void onLoad() override;
 
-        void saveUI(std::string filepath);
+        void saveUI(std::string filepath, std::string name);
+        std::string loadUI(std::string filepath);
+
         void createEntity(EntityType entityType, std::string name, std::string parentName);
         void removeEntity(std::string name);
         void sortEntities(std::string parentName, std::vector<std::string> childrenNames);
@@ -29,6 +31,7 @@ namespace mog {
         void setOriginX(std::string name, float x);
         void setOriginY(std::string name, float y);
         void setColor(std::string name, const Color &color);
+        void setGroupEnableBatching(std::string name, bool enableBatching);
 
         void replaceRoundedRectangle(std::string name, float cornerRadius);
         void replaceCircle(std::string name, float radius);
@@ -45,6 +48,7 @@ namespace mog {
 
         mog::Density getDensity(std::string filepath);
 
+        std::string getRootName();
         mog::Point getPosition(std::string name);
         mog::Size getSize(std::string name);
         bool isRatioWidth(std::string name);
@@ -65,6 +69,9 @@ namespace mog {
         mog::Size getSpriteSheetFrameSize(std::string name);
         unsigned int getSpriteSheetFrameCount(std::string name);
         unsigned int getSpriteSheetMargin(std::string name);
+        bool isGroupEnableBatching(std::string name);
+
+        std::vector<std::pair<std::string, mog::EntityType>> getChildEntities(std::string name);
 
     private:
         shared_ptr<mog::Scene> mainScene;

@@ -2,7 +2,6 @@
 #include "mog/base/AppBase.h"
 #include "mog/base/Scene.h"
 #include "mog/core/Engine.h"
-#include "mog/base/BatchingGroup.h"
 #include "mog/base/Rectangle.h"
 
 using namespace mog;

@@ -86,7 +86,6 @@ namespace mog {
         int frameCountForFps = 0;
         bool timerRunning = false;
         long long timerStartTime = 0;
-        long long timerPauseTime = 0;
         long long timerBackupTime = 0;
         float lastElapsedSec = 0;
         

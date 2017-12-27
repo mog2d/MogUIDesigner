@@ -43,6 +43,7 @@ const std::string MogUILoader::PropertyNames::FrameWidth = "frame_width";
 const std::string MogUILoader::PropertyNames::FrameHeight = "frame_height";
 const std::string MogUILoader::PropertyNames::FrameCount = "frame_count";
 const std::string MogUILoader::PropertyNames::Margin = "margin";
+const std::string MogUILoader::PropertyNames::EnableBatching = "enableBatching";
 const std::string MogUILoader::PropertyNames::ChildEntities = "childEntities";
 
 
@@ -124,9 +125,9 @@ Dictionary MogUILoader::serialize(const std::shared_ptr<Entity> &entity) {
              }
             break;
         }
-        case EntityType::Group:
-        case EntityType::BatchingGroup: {
+        case EntityType::Group: {
             auto group = static_pointer_cast<Group>(entity);
+            dict.put(PropertyNames::EnableBatching, Bool(group->isEnableBatching()));
             Array arr;
             for (auto child : group->getChildEntities()) {
                 auto childDict = serialize(child);
@@ -218,14 +219,9 @@ std::shared_ptr<Entity> MogUILoader::deserialize(const Dictionary &uiDict) {
             }
             break;
         }
-        case EntityType::Group:
-        case EntityType::BatchingGroup: {
-            shared_ptr<Group> group = nullptr;
-            if (entityType == EntityType::BatchingGroup) {
-                group = BatchingGroup::create();
-            } else {
-                group = Group::create();
-            }
+        case EntityType::Group: {
+            bool enableBatching = uiDict.get<Bool>(PropertyNames::EnableBatching).value;
+            shared_ptr<Group> group = Group::create(enableBatching);
             auto arr = uiDict.get<Array>(PropertyNames::ChildEntities);
             for (int i = 0; i < arr.size(); i++) {
                 auto childDict = arr.at<Dictionary>(i);

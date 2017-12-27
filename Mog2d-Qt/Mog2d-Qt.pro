@@ -37,7 +37,6 @@ SOURCES += \
         mainwindow.cpp \
         mogglwidget.cpp \
         ../classes/mog/base/AppBase.cpp \
-        ../classes/mog/base/BatchingGroup.cpp \
         ../classes/mog/base/Circle.cpp \
         ../classes/mog/base/DrawEntity.cpp \
         ../classes/mog/base/Entity.cpp \
@@ -90,7 +89,6 @@ HEADERS += \
         mogglwidget.h \
         ../classes/mog/base/AppBase.h \
         ../classes_qt/mog/os/mogenginecontroller.h \
-        ../classes/mog/base/BatchingGroup.h \
         ../classes/mog/base/Circle.h \
         ../classes/mog/base/DrawEntity.h \
         ../classes/mog/base/Entity.h \

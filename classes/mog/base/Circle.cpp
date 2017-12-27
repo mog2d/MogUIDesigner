@@ -18,7 +18,7 @@ void Circle::init(float radius) {
     this->radius = radius;
     this->transform->size = Size(radius * 2, radius * 2);
     this->size = this->transform->size;
-
+    
     float deviceDensity = Device::getDeviceDensity();
     int radiusi = (int)(radius * deviceDensity * 0.5f);
     float v = 1.0f;
@@ -31,7 +31,7 @@ void Circle::init(float radius) {
             data[i + 0] = 255;
             data[i + 1] = 255;
             data[i + 2] = 255;
-
+            
             float _x = x + 0.5f;
             float _y = y + 0.5f;
             float l = sqrt(_x * _x + _y * _y);
@@ -46,7 +46,7 @@ void Circle::init(float radius) {
             }
         }
     }
-
+    
     this->texture = Texture2D::createWithRGBA(data, radius, radius);
     this->rect = Rect(0, 0, this->texture->width, this->texture->height);
 }
@@ -75,11 +75,11 @@ void Circle::bindVertices(float *vertices, int *idx, bool bakeTransform) {
     } else {
         m = Renderer::identityMatrix;
     }
-
+    
     auto v1 = Point(m[0], m[1]);
     auto v2 = Point(m[4], m[5]);
     auto offset = Point(m[12], m[13]);
-
+    
     Point size = Point(this->transform->size.width * this->screenScale,
                        this->transform->size.height * this->screenScale);
     float xx[3] = {
@@ -92,12 +92,12 @@ void Circle::bindVertices(float *vertices, int *idx, bool bakeTransform) {
         size.y * 0.5f,
         size.y,
     };
-
+    
     for (int xi = 0; xi < 3; xi++) {
         for (int yi = 0; yi < 3; yi++) {
             float x = xx[xi];
             float y = yy[yi];
-
+            
             Point p = v1 * x + v2 * y;
             vertices[(*idx)++] = (p.x + offset.x);
             vertices[(*idx)++] = (p.y + offset.y);
@@ -112,7 +112,7 @@ void Circle::bindIndices(short *indices, int *idx, int start) {
         (*idx)++;
         indices[(*idx)++] = 0 + start;
     }
-
+    
     short sliceIndices[14] = {
         0, 3, 1, 4, 2, 5,
         5, 3,
@@ -125,15 +125,15 @@ void Circle::bindIndices(short *indices, int *idx, int start) {
 
 void Circle::bindVertexTexCoords(float *vertexTexCoords, int *idx, float x, float y, float w, float h) {
     if (!this->visible) return;
-
+    
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y + h;
     vertexTexCoords[(*idx)++] = x;      vertexTexCoords[(*idx)++] = y + h;
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y + h;
-
+    
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y;
     vertexTexCoords[(*idx)++] = x;      vertexTexCoords[(*idx)++] = y;
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y;
-
+    
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y + h;
     vertexTexCoords[(*idx)++] = x;      vertexTexCoords[(*idx)++] = y + h;
     vertexTexCoords[(*idx)++] = x + w;  vertexTexCoords[(*idx)++] = y + h;

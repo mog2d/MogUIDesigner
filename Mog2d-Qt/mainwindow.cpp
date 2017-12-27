@@ -15,7 +15,6 @@ const std::unordered_map<std::string, mog::EntityType> MainWindow::entityTypeMap
     {"Slice9Sprite",        mog::EntityType::Slice9Sprite},
     {"SpriteSheet",         mog::EntityType::SpriteSheet},
     {"Group",               mog::EntityType::Group},
-    {"BatchingGroup",       mog::EntityType::BatchingGroup},
 };
 
 
@@ -52,6 +51,22 @@ MainWindow::MainWindow(QApplication &a, QWidget *parent) :
     this->ui->treeWidget_Entities->setTreeItemRemoved([this](std::string name) {
         this->getApp()->removeEntity(name);
     });
+
+    this->ui->treeWidget_Assets->setTreeItemDoubleClicked([this](std::string path) {
+        QString qpath = QString(path.c_str());
+        if (!qpath.endsWith(".mogui")) return;
+
+        QString filepath = this->projectPath + "/" + qpath;
+        std::string rootName = this->getApp()->loadUI(filepath.toStdString());
+
+        this->ui->treeWidget_Entities->clear();
+        auto rootItem = new QTreeWidgetItem();
+        rootItem->setText(0, QString(rootName.c_str()));
+        rootItem->setText(1, "Group");
+        this->ui->treeWidget_Entities->addTopLevelItem(rootItem);
+
+        this->addTreeItemEntity(rootItem, rootName);
+    });
 }
 
 MainWindow::~MainWindow()
@@ -59,10 +74,28 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::addTreeItemEntity(QTreeWidgetItem *parentItem, std::string parentName)
+{
+    auto children = this->getApp()->getChildEntities(parentName);
+    for (auto pair : children) {
+        auto name = pair.first;
+        auto typeName = this->toString(pair.second);
+
+        QTreeWidgetItem *child = new QTreeWidgetItem(parentItem);
+        child->setText(0, QString(name.c_str()));
+        child->setText(1, QString(typeName.c_str()));
+
+        if (pair.second == mog::EntityType::Group) {
+            this->addTreeItemEntity(child, name);
+        }
+    }
+}
+
 void MainWindow::saveFile() {
     QString dirPath = QDir(this->projectPath).filePath("assets");
     QString filepath = QFileDialog::getSaveFileName(this, "Save file", dirPath, "*.mogui");
-    this->getApp()->saveUI(filepath.toStdString());
+    std::string rootName = this->ui->treeWidget_Entities->topLevelItem(0)->text(0).toStdString();
+    this->getApp()->saveUI(filepath.toStdString(), rootName);
     this->initAssets();
 }
 
@@ -551,6 +584,10 @@ void MainWindow::initPropertiesGroup()
 {
     this->startPropertiesGroup("Group");
 
+    this->createCheckBox("baching", Property::Batching, [this](bool checked) {
+        this->getApp()->setGroupEnableBatching(this->getSelectedName(), checked);
+    });
+
     this->endPropertiesGroup("Group");
 }
 
@@ -816,6 +853,7 @@ void MainWindow::entitiesItemSelectionChanged()
             break;
 
         case mog::EntityType::Group:
+            this->initPropertiesGroup();
             this->ui->comboBox_CreateEntity->setEnabled(true);
             break;
         }
@@ -899,10 +937,6 @@ void MainWindow::setPropertyValuesFromEntity() {
     originXW->setEnabled(enabled);
     originYW->setEnabled(enabled);
     colorButton->setEnabled(enabled);
-
-    if (name == "root") {
-        nameW->setEnabled(false);
-    }
 
     if (entityTypeName.length() == 0) return;
 
@@ -1001,6 +1035,12 @@ void MainWindow::setPropertyValuesFromEntity() {
 
             break;
         }
+
+        case mog::EntityType::Group: {
+            bool enableBatching = this->getApp()->isGroupEnableBatching(name);
+            auto enableBatchingW = (QCheckBox *)this->getWidget(Property::Batching);
+            enableBatchingW->setChecked(enableBatching);
+        }
     }
 }
 
@@ -1033,6 +1073,15 @@ std::string MainWindow::getSelectedEntityType() {
 
 mog::EntityType MainWindow::toEntityType(std::string entityTypeName) {
     return MainWindow::entityTypeMap.at(entityTypeName);
+}
+
+std::string MainWindow::toString(mog::EntityType entityType) {
+    for (auto pair : MainWindow::entityTypeMap) {
+        if (pair.second == entityType) {
+            return pair.first;
+        }
+    }
+    return "";
 }
 
 mog::Dictionary MainWindow::createDictionary(mog::EntityType entityType) {

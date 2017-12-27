@@ -1,16 +1,28 @@
 #include "mog/Constants.h"
 #include "mog/base/Group.h"
+#include "mog/base/Sprite.h"
 #include "mog/core/Engine.h"
 #include <algorithm>
 
 using namespace mog;
 
-shared_ptr<Group> Group::create() {
-    return shared_ptr<Group>(new Group());
+shared_ptr<Group> Group::create(bool enableBatching) {
+    auto group = shared_ptr<Group>(new Group());
+    group->setEnableBatching(enableBatching);
+    return group;
 }
 
 Group::Group() {
     this->sortOrderDirty = true;
+}
+
+void Group::setEnableBatching(bool enableBatching) {
+    this->enableBatching = enableBatching;
+    this->reRenderFlag = RERENDER_ALL;
+}
+
+bool Group::isEnableBatching() {
+    return this->enableBatching;
 }
 
 void Group::updateFrame(const shared_ptr<Engine> &engine, float delta) {
@@ -34,22 +46,83 @@ void Group::drawFrame(float delta) {
     if (!this->visible) return;
     
     auto childEntitiesToDraw = this->getSortedChildEntitiesToDraw();
-    if (this->reRenderFlag > 0 && (this->reRenderFlag & RERENDER_COLOR) == RERENDER_COLOR) {
-        this->setReRenderFlagToChild(RERENDER_COLOR);
+    
+    if (this->enableBatching) {
+        if ((this->reRenderFlag & RERENDER_ALL) == RERENDER_ALL) {
+            this->bindVertex();
+            this->reRenderFlag = 0;
+        }
+        if (this->reRenderFlag > 0) {
+            this->bindVertexSub();
+            this->reRenderFlag = 0;
+        }
+        
+        Group::updateMatrix();
+        
+        this->renderer->drawFrame(this->transform, this->screenScale);
+
+    } else {
+        if (this->reRenderFlag > 0 && (this->reRenderFlag & RERENDER_COLOR) == RERENDER_COLOR) {
+            this->setReRenderFlagToChild(RERENDER_COLOR);
+        }
+        
+        this->renderer->pushMatrix();
+        this->renderer->pushColor();
+        this->renderer->applyTransform(this->transform, this->screenScale);
+        
+        for (const auto &entity : childEntitiesToDraw) {
+            entity->drawFrame(delta);
+        }
+        
+        this->renderer->popColor();
+        this->renderer->popMatrix();
     }
-    
-    this->renderer->pushMatrix();
-    this->renderer->pushColor();
-    this->renderer->applyTransform(this->transform, this->screenScale);
-    
-    for (const auto &entity : childEntitiesToDraw) {
-        entity->drawFrame(delta);
-    }
-    
-    this->renderer->popColor();
-    this->renderer->popMatrix();
     
     this->reRenderFlag = 0;
+}
+
+void Group::bindVertex() {
+    if (this->enableBatching) {
+        int indiciesNum = 0;
+        this->getIndiciesNum(&indiciesNum);
+        int verticesNum = 0;
+        this->getVerticesNum(&verticesNum);
+        
+        auto indices = new short[indiciesNum];
+        int idx = 0;
+        this->bindIndices(indices, &idx, 0);
+        auto vertices = new float[verticesNum * 2];
+        idx = 0;
+        
+        this->bindVertices(vertices, &idx, false);
+        this->renderer->bindVertex(vertices, verticesNum * 2, indices, indiciesNum, true);
+        
+        safe_delete_arr(indices);
+        safe_delete_arr(vertices);
+        
+        vector<shared_ptr<Texture2D>> textures;
+        this->textureAtlas = make_shared<TextureAtlas>();
+        this->addTextureTo(this->textureAtlas);
+        this->texture = this->textureAtlas->createTexture();
+        
+        float *vertexTexCoords = new float[verticesNum * 2];
+        idx = 0;
+        this->bindVertexTexCoords(this->textureAtlas, vertexTexCoords, &idx, 0, 0, 1.0f, 1.0f);
+        this->textureAtlas->bindTexture();
+        this->renderer->bindTextureVertex(this->texture->textureId, vertexTexCoords, verticesNum * 2, true);
+        
+        safe_delete_arr(vertexTexCoords);
+        
+        float *vertexColors = new float[verticesNum * 4];
+        idx = 0;
+        this->bindVertexColors(vertexColors, &idx, this->getParentColor());
+        this->renderer->bindColorsVertex(vertexColors, verticesNum * 4, true);
+        
+        safe_delete_arr(vertexColors);
+        
+    } else {
+        Entity::bindVertex();
+    }
 }
 
 void Group::getVerticesNum(int *num) {
@@ -75,9 +148,18 @@ void Group::bindVertices(float *vertices, int *idx, bool bakeTransform) {
         this->renderer->applyTransform(this->transform, this->screenScale, false);
     }
     
+    if (this->enableBatching) {
+        this->renderer->getMatrix(this->tmpMatrix);
+        this->renderer->setMatrix(Renderer::identityMatrix);
+    }
+    
     auto childEntitiesToDraw = this->getSortedChildEntitiesToDraw();
     for (auto &entity : childEntitiesToDraw) {
         entity->bindVertices(vertices, idx, true);
+    }
+
+    if (this->enableBatching) {
+        this->renderer->setMatrix(this->tmpMatrix);
     }
     
     if (bakeTransform) {
@@ -130,9 +212,44 @@ void Group::bindVertexColors(float *vertexColors, int *idx, const Color &parentC
 
 void Group::bindVertexSub() {
     if (!this->visible) return;
-    auto childEntitiesToDraw = this->getSortedChildEntitiesToDraw();
-    for (auto &entity : childEntitiesToDraw) {
-        entity->bindVertexSub();
+    
+    if (this->enableBatching) {
+        int verticesNum = 0;
+        this->getVerticesNum(&verticesNum);
+        
+        if ((this->reRenderFlag & RERENDER_VERTEX) == RERENDER_VERTEX) {
+            float *vertices = new float[verticesNum * 2];
+            int idx = 0;
+            this->bindVertices(vertices, &idx, false);
+            this->renderer->bindVertexSub(vertices, verticesNum * 2);
+            safe_delete_arr(vertices);
+            this->reRenderFlag &= ~RERENDER_VERTEX;
+        }
+        
+        if ((this->reRenderFlag & RERENDER_COLOR) == RERENDER_COLOR) {
+            float *vertexColors = new float[verticesNum * 4];
+            int idx = 0;
+            this->bindVertexColors(vertexColors, &idx, this->getParentColor());
+            this->renderer->bindColorsVertexSub(vertexColors, verticesNum * 4);
+            this->reRenderFlag &= ~RERENDER_COLOR;
+            safe_delete_arr(vertexColors);
+            this->reRenderFlag &= ~RERENDER_COLOR;
+        }
+        
+        if ((this->reRenderFlag & RERENDER_TEX_COORDS) == RERENDER_TEX_COORDS) {
+            float *vertexTexCoords = new float[verticesNum * 2];
+            int idx = 0;
+            this->bindVertexTexCoords(this->textureAtlas, vertexTexCoords, &idx, 0, 0, 1.0f, 1.0f);
+            this->renderer->bindTextureVertex(this->texture->textureId, vertexTexCoords, verticesNum * 2);
+            safe_delete_arr(vertexTexCoords);
+            this->reRenderFlag &= ~RERENDER_TEX_COORDS;
+        }
+        
+    } else {
+        auto childEntitiesToDraw = this->getSortedChildEntitiesToDraw();
+        for (auto &entity : childEntitiesToDraw) {
+            entity->bindVertexSub();
+        }
     }
 }
 
@@ -206,7 +323,7 @@ shared_ptr<Entity> Group::findChildByName(string name, bool recursive) {
     for (const auto &entity : this->childEntities) {
         if (entity->getName() == name) return entity;
         if (recursive) {
-            if (entity->getEntityType() == EntityType::Group || entity->getEntityType() == EntityType::BatchingGroup) {
+            if (entity->getEntityType() == EntityType::Group) {
                 if (auto e = static_pointer_cast<Group>(entity)->findChildByName(name)) {
                     return e;
                 }
@@ -223,7 +340,7 @@ vector<shared_ptr<Entity>> Group::findChildrenByTag(string tag, bool recursive) 
             vec.emplace_back(entity);
         };
         if (recursive) {
-            if (entity->getEntityType() == EntityType::Group || entity->getEntityType() == EntityType::BatchingGroup) {
+            if (entity->getEntityType() == EntityType::Group) {
                 if (auto e = static_pointer_cast<Group>(entity)->findChildByName(name)) {
                     vec.emplace_back(e);
                 }
@@ -280,4 +397,19 @@ void Group::copyFrom(const shared_ptr<Entity> &src) {
 EntityType Group::getEntityType() {
     return EntityType::Group;
 }
+
+Color Group::getParentColor() {
+    Color parentColor = Color::white;
+    shared_ptr<Entity> g = static_pointer_cast<Entity>(shared_from_this());
+    while ((g = g->getGroup())) {
+        parentColor = parentColor * g->getColor();
+    }
+    return parentColor;
+}
+
+shared_ptr<Sprite> Group::createTextureSprite() {
+    if (!this->textureAtlas) return nullptr;
+    return Sprite::createWithTexture(this->textureAtlas->texture);
+}
+
 

@@ -207,7 +207,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QTreeWidget" name="treeWidget_Assets">
+      <widget class="MogAssetTreeWidget" name="treeWidget_Assets">
        <attribute name="headerVisible">
         <bool>false</bool>
        </attribute>
@@ -285,6 +285,11 @@
    <class>MogEntityTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>mogentitytreewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MogAssetTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>mogassettreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -81,6 +81,8 @@ private:
         Margin,
         Play,
         Reset,
+        // Group
+        Batching,
     };
 
     static const std::unordered_map<std::string, mog::EntityType> entityTypeMap;
@@ -108,6 +110,8 @@ private:
     void initPropertiesGroup();
     void setPropertyValuesFromEntity();
 
+    void addTreeItemEntity(QTreeWidgetItem *parentItem, std::string parentName);
+
     QLineEdit *createLineEdit(QString name, Property prop, QValidator *validator, std::function<void()> editingFinished);
     QCheckBox *createCheckBox(QString name, Property prop, std::function<void(bool checked)> clicked);
     QComboBox *createComboBox(QString name, Property prop, QStringList &items, std::function<void(const QString &text)> currentTextChanged);
@@ -126,6 +130,7 @@ private:
     std::string getSelectedName();
     std::string getSelectedEntityType();
     mog::EntityType toEntityType(std::string entityTypeName);
+    std::string toString(mog::EntityType entityType);
     QString formatFloat(float f);
     bool openMogProject();
     void initAssets();

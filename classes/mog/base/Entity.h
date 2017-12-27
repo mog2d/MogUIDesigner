@@ -34,7 +34,6 @@ namespace mog {
         Slice9Sprite,
         SpriteSheet,
         Group,
-        BatchingGroup,
     };
     
     class Entity : public enable_shared_from_this<Entity> {

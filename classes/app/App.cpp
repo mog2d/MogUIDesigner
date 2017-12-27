@@ -10,10 +10,19 @@ void App::onLoad() {
     this->loadScene(this->mainScene);
 }
 
-void App::saveUI(std::string filepath) {
-    auto root = this->mainScene->getRootGroup()->findChildByName("root");
+void App::saveUI(std::string filepath, std::string name) {
+    auto root = this->mainScene->getRootGroup()->findChildByName(name);
     auto uiDict = MogUILoader::serialize(root);
     DataStore::serialize(filepath, uiDict);
+}
+
+std::string App::loadUI(std::string filepath) {
+    auto root = this->mainScene->getRootGroup();
+    auto uiDict = DataStore::deserialize<mog::Dictionary>(filepath);
+    auto entity = MogUILoader::deserialize(uiDict);
+    root->removeAll();
+    root->add(entity);
+    return entity->getName();
 }
 
 void App::createEntity(EntityType entityType, std::string name, std::string parentName) {
@@ -197,6 +206,18 @@ void App::setColor(std::string name, const Color &color) {
     }
 }
 
+void App::setGroupEnableBatching(std::string name, bool enableBatching) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto group = static_pointer_cast<Group>(entity);
+    if (group) {
+        group->setEnableBatching(enableBatching);
+    }
+}
+
+std::string App::getRootName() {
+    return this->mainScene->getRootGroup()->getChildEntities()[0]->getName();
+}
+
 mog::Point App::getPosition(std::string name) {
     auto entity = this->mainScene->getRootGroup()->findChildByName(name);
     if (entity) {
@@ -364,6 +385,29 @@ unsigned int App::getSpriteSheetMargin(std::string name) {
         return spriteSheet->getMargin();
     }
     return 0;
+}
+
+bool App::isGroupEnableBatching(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto group = static_pointer_cast<Group>(entity);
+    if (group) {
+        return group->isEnableBatching();
+    }
+    return false;
+}
+
+std::vector<std::pair<std::string, mog::EntityType>> App::getChildEntities(std::string name) {
+    auto entity = this->mainScene->getRootGroup()->findChildByName(name);
+    auto group = static_pointer_cast<Group>(entity);
+    std::vector<std::pair<std::string, mog::EntityType>> vec;
+    if (group) {
+        auto children = group->getChildEntities();
+        for (auto child : children) {
+            auto p = std::pair<std::string, mog::EntityType>(child->getName(), child->getEntityType());
+            vec.emplace_back(p);
+        }
+    }
+    return vec;
 }
 
 void App::replaceRoundedRectangle(std::string name, float cornerRadius) {

@@ -12,7 +12,6 @@
 #include "mog/base/Rectangle.h"
 #include "mog/base/RoundedRectangle.h"
 #include "mog/base/Group.h"
-#include "mog/base/BatchingGroup.h"
 #include "mog/base/Slice9Sprite.h"
 
 #endif /* MogUILoader_h */
@@ -61,6 +60,7 @@ namespace mog {
             static const std::string FrameHeight;
             static const std::string FrameCount;
             static const std::string Margin;
+            static const std::string EnableBatching;
             static const std::string ChildEntities;
         };
         

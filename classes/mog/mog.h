@@ -29,7 +29,6 @@
 #include "mog/base/Rectangle.h"
 #include "mog/base/RoundedRectangle.h"
 #include "mog/base/Group.h"
-#include "mog/base/BatchingGroup.h"
 #include "mog/base/Slice9Sprite.h"
 #include "mog/base/Scene.h"
 #include "mog/base/AppBase.h"
